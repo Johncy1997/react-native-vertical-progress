@@ -1,0 +1,24 @@
+{
+  "name": "animateprogress",
+  "version": "1.0.0",
+  "description": "This is my first npm module creation try",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "react-native-progress-bar",
+    "react-progress"
+  ],
+  "author": "Johncy",
+  "license": "ISC",
+  "dependencies": {
+    "prop-types": "^15.7.2",
+    "react": "^16.9.0",
+    "react-native": "^0.60.5"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Johncy1997/animateprogress.git"
+  }
+}
