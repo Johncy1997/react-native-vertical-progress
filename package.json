@@ -1,6 +1,6 @@
 {
   "name": "react-native-vertical-progress",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Vertical progress bar using react native animated api",
   "main": "index.js",
   "scripts": {
