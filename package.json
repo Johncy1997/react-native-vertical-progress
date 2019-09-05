@@ -1,16 +1,18 @@
 {
-  "name": "animateprogress",
+  "name": "react-native-vertical-progress",
   "version": "1.0.1",
-  "description": "This is my first npm module creation try",
+  "description": "Vertical progress bar using react native animated api",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
     "react-native-progress-bar",
-    "react-progress"
+    "react-progress",
+    "react-native-animated-progress",
+    "react-native-vertical-progress"
   ],
-  "author": "Johncy",
+  "author": "Johncy Arul A",
   "license": "ISC",
   "dependencies": {
     "prop-types": "^15.7.2",
