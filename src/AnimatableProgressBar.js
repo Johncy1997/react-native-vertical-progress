@@ -1,9 +1,8 @@
 import React, { Component } from 'react';
 import {
     View,
-    Text,
     Animated,
-    Easing,
+    Easing
 } from 'react-native';
 import PropTypes from 'prop-types';
 
@@ -12,7 +11,11 @@ export default class AnimatableProgressBar extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            progress: props.value,
+            current: props.current,
+            One_Percent: props.width / 100,
+            minimum: props.minimum,
+            maximum: props.maximum,
+            stripeLine: []
         }
         this.widthAnimation = new Animated.Value(0);
         this.backgroundAnimation = new Animated.Value(0);
@@ -21,22 +24,35 @@ export default class AnimatableProgressBar extends Component {
     }
 
     componentDidMount() {
-        if (this.state.progress > 0) {
-            this.animateWidth();
+        if (this.state.current > 0) {
+            switch (this.props.type) {
+                case "increase":
+                    this.animateSuddendly();
+                    break;
+                case "progress":
+                    this.startProgress();
+                    break;
+                case "decrease":
+                    this.animateWidth();
+                    break;
+            }
         }
     }
 
-    animateWidth() {
-        const toValue = ((this.props.width * this.state.progress) / 100) - this.props.borderWidth * 2;
-        Animated.timing(this.widthAnimation, {
-            easing: Easing[this.props.barEasing],
-            toValue: toValue > 0 ? toValue : 0,
-            duration: this.props.barAnimationDuration,
-        }).start();
-        Animated.timing(this.textPosition, {
-            toValue: toValue,
-            duration: this.props.barAnimationDuration,
-        }).start();
+    startProgress = () => {
+        this.animateWidth();
+        this.value = setInterval(() => {
+            if (this.state.current >= this.state.minimum) {
+                this.setState({
+                    current: this.state.current - this.state.One_Percent
+                }, () => {
+                    this.animateWidth();
+                })
+            }
+            else {
+                this.stopProgress();
+            }
+        }, this.props.interval);
     }
 
     animateBackground() {
@@ -50,10 +66,125 @@ export default class AnimatableProgressBar extends Component {
         }).start();
     }
 
+    stopProgress = () => {
+        clearInterval(this.value);
+    }
+
+    clearProgress = () => {
+        this.setState({ current: 0 })
+    }
+
+    animateWidth() {
+        const currentPercent = (this.state.current * 100) / this.state.maximum;
+        const toValue = currentPercent * this.state.One_Percent.toFixed(0);
+        Animated.timing(this.widthAnimation, {
+            easing: Easing[this.props.barEasing],
+            toValue: toValue > 0 ? toValue : 0,
+            duration: this.props.barAnimationDuration,
+        }).start();
+        Animated.timing(this.textPosition, {
+            toValue: toValue,
+            duration: this.props.barAnimationDuration,
+        }).start();
+    }
+
+    animateSuddendly() {
+        const currentPercent = (this.state.current * 100) / this.state.maximum;
+        const toValue = currentPercent * this.state.One_Percent.toFixed(0);
+        Animated.parallel([
+            Animated.timing(this.widthAnimation, {
+                toValue: toValue,
+                duration: this.props.barAnimationDuration
+            }),
+            Animated.timing(this.textPosition, {
+                toValue: toValue > 0 ? toValue : 0,
+                duration: this.props.barAnimationDuration,
+            })
+        ]).start();
+
+    }
+
+    createStripedLines() {
+        let lines = [];
+        for (var i = 0; i < this.props.width / 12; i++) {
+            lines.push(<View style={{
+                backgroundColor: this.props.lineBackgroundColor, height: 2,
+                width: '100%', marginTop: 10
+            }} />)
+        }
+        return lines;
+    }
+
     render() {
         return (
-            <View>
-                <Text>My progress</Text>
+            <View style={{
+                width: this.props.height,
+                height: this.props.width,
+                borderWidth: this.props.borderWidth,
+                borderColor: this.props.borderColor,
+                borderRadius: this.props.borderRadius,
+                overflow: 'visible',
+                transform: [{ rotate: '180deg' }]
+            }}
+            >
+                <View style={{
+                    position: 'absolute',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    alignSelf: 'center',
+                    padding: 5,
+                    zIndex: 11,
+                    overflow: 'hidden',
+                    width: '100%',
+                    height: '100%',
+                    borderRadius: this.props.borderRadius
+                }}>
+                    {
+                        this.createStripedLines()
+                    }
+                </View>
+
+                <Animated.View style={{
+                    height: this.widthAnimation,
+                    width: this.props.height - (this.props.borderWidth * 2),
+                    backgroundColor: this.backgroundInterpolationValue || this.props.backgroundColor,
+                    borderRadius: this.props.borderRadius,
+                    zIndex: 10,
+                }}
+                >
+                </Animated.View>
+                <Animated.View style={{
+                    backgroundColor: 'black',
+                    marginLeft: -20,
+                    top: this.textPosition,
+                    position: 'absolute',
+                    height: this.props.height,
+                    width: this.props.height + 20,
+                    maxHeight: this.props.height,
+                    maxWidth: this.props.height + 20,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    zIndex: 999,
+                    transform: [{ rotate: '180deg' }],
+                    backfaceVisibility: 'hidden'
+                }}>
+
+                    <Animated.Text
+                        numberOfLines={1}
+                        adjustsFontSizeToFit={true}
+                        minimumFontScale={.5}
+                        style={[
+                            {
+                                color: this.props.textColor,
+                                fontSize: 14,
+                                fontWeight: 'bold'
+                            }
+                        ]}
+
+                    >
+                        ${this.state.current}
+                    </Animated.Text>
+                </Animated.View>
             </View>
         )
     }
@@ -63,9 +194,9 @@ AnimatableProgressBar.propTypes = {
     /**
    * Bar values
    */
-    value: PropTypes.number,
-    maxValue: PropTypes.number,
-
+    minimum: PropTypes.number,
+    maximum: PropTypes.number,
+    current: PropTypes.number.isRequired,
     /**
      * Animations
      */
@@ -90,29 +221,39 @@ AnimatableProgressBar.propTypes = {
     borderWidth: PropTypes.number,
     borderColor: PropTypes.string,
     borderRadius: PropTypes.number,
+    lineBackgroundColor: PropTypes.string,
+    textColor: PropTypes.string,
+    interval: PropTypes.number,
 
     /**
      * Callbacks
      */
     onComplete: PropTypes.func,
+    type: PropTypes.oneOf(["decrease", "increase", "progress"])
 }
 
 AnimatableProgressBar.defaultProps = {
-    value: 0,
-    maxValue: 100,
+    minimum: 0,
+    maximum: 100,
 
     barEasing: 'linear',
-    barAnimationDuration: 500,
+    barAnimationDuration: 1000,
     backgroundAnimationDuration: 2500,
 
     height: 15,
 
-    backgroundColor: '#148cF0',
+    backgroundColor: 'green',
     backgroundColorOnComplete: null,
+
+    lineBackgroundColor: '#fff',
+    textColor: '#fff',
 
     borderWidth: 1,
     borderColor: '#C8CCCE',
     borderRadius: 6,
 
     onComplete: null,
+    type: 'decrease',
+    minimum: 0,
+    interval: 1000
 }
